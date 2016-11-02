@@ -167,7 +167,8 @@ bool process_tapping(keyrecord_t *keyp)
                     debug("Tapping: Tap release("); debug_dec(tapping_key.tap.count); debug(")\n");
                     keyp->tap = tapping_key.tap;
                     process_record(keyp);
-                    tapping_key = *keyp;
+                    //tapping_key = *keyp;
+                    tapping_key = (keyrecord_t){};
                     debug_tapping_key();
                     return true;
                 }
@@ -200,47 +201,47 @@ bool process_tapping(keyrecord_t *keyp)
         }
         // after TAPPING_TERM
         else {
-            if (tapping_key.tap.count == 0) {
+            //if (tapping_key.tap.count == 0) {
                 debug("Tapping: End. Timeout. Not tap(0): ");
                 debug_event(event); debug("\n");
                 process_record(&tapping_key);
                 tapping_key = (keyrecord_t){};
                 debug_tapping_key();
                 return false;
-            }  else {
-                if (IS_TAPPING_KEY(event.key) && !event.pressed) {
-                    debug("Tapping: End. last timeout tap release(>0).");
-                    keyp->tap = tapping_key.tap;
-                    process_record(keyp);
-                    tapping_key = (keyrecord_t){};
-                    return true;
-                }
-                else if (is_tap_key(event.key) && event.pressed) {
-                    if (tapping_key.tap.count > 1) {
-                        debug("Tapping: Start new tap with releasing last timeout tap(>1).\n");
-                        // unregister key
-                        process_record(&(keyrecord_t){
-                                .tap = tapping_key.tap,
-                                .event.key = tapping_key.event.key,
-                                .event.time = event.time,
-                                .event.pressed = false
-                        });
-                    } else {
-                        debug("Tapping: Start while last timeout tap(1).\n");
-                    }
-                    tapping_key = *keyp;
-                    waiting_buffer_scan_tap();
-                    debug_tapping_key();
-                    return true;
-                }
-                else {
-                    if (!IS_NOEVENT(event)) {
-                        debug("Tapping: key event while last timeout tap(>0).\n");
-                    }
-                    process_record(keyp);
-                    return true;
-                }
-            }
+            //}  else {
+            //    if (IS_TAPPING_KEY(event.key) && !event.pressed) {
+            //        debug("Tapping: End. last timeout tap release(>0).");
+            //        keyp->tap = tapping_key.tap;
+            //        process_record(keyp);
+            //        tapping_key = (keyrecord_t){};
+            //        return true;
+            //    }
+            //    else if (is_tap_key(event.key) && event.pressed) {
+            //        if (tapping_key.tap.count > 1) {
+            //            debug("Tapping: Start new tap with releasing last timeout tap(>1).\n");
+            //            // unregister key
+            //            process_record(&(keyrecord_t){
+            //                    .tap = tapping_key.tap,
+            //                    .event.key = tapping_key.event.key,
+            //                    .event.time = event.time,
+            //                    .event.pressed = false
+            //            });
+            //        } else {
+            //            debug("Tapping: Start while last timeout tap(1).\n");
+            //        }
+            //        tapping_key = *keyp;
+            //        waiting_buffer_scan_tap();
+            //        debug_tapping_key();
+            //        return true;
+            //    }
+            //    else {
+            //        if (!IS_NOEVENT(event)) {
+            //            debug("Tapping: key event while last timeout tap(>0).\n");
+            //        }
+            //        process_record(keyp);
+            //        return true;
+            //    }
+            //}
         }
     } else if (IS_TAPPING_RELEASED()) {
         if (WITHIN_TAPPING_TERM(event)) {

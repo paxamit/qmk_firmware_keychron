@@ -26,7 +26,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_E,  KC_R,   KC_T,   KC_Y,   KC_U,   KC_I, KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, \
         CTL_ESC, KC_A,    KC_S,    KC_D,  KC_F,   KC_G,   KC_H,   KC_J,   KC_K, KC_L,    KC_SCLN, KC_QUOT,          KC_ENT, \
         KC_LSFT,          KC_Z,    KC_X,  KC_C,   KC_V,   KC_B,   KC_N,   KC_M, KC_COMM, KC_DOT,  KC_SLSH,          KC_RSFT, \
-        KC_FN0,  KC_LGUI, KC_LALT,                KC_FN2,                                KC_RALT, KC_FN0,  KC_FN3,  KC_FN4),
+        KC_HYPR,  KC_LGUI, KC_LALT,               KC_FN2,                                KC_RALT, KC_FN5,  KC_FN3,  KC_FN4),
     /* 1: fn */
 	KEYMAP(
         TRNS,  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11,   F12,DELETE, \
@@ -48,6 +48,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS, \
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS, \
         TRNS,TRNS,TRNS,          SPACE,              TRNS,TRNS,TRNS,TRNS,TRNS),
+    
+	KEYMAP(
+        TRNS,TRNS, TRNS, TRNS, TRNS,TRNS,TRNS, TRNS, TRNS, TRNS,TRNS,TRNS,TRNS,TRNS, \
+         F13, F14,  F15,  F16,  F17,TRNS,TRNS, TRNS, TRNS, TRNS,TRNS,TRNS,TRNS,TRNS, \
+         F18, F19,  F20,  F21,  F22,TRNS,TRNS,LANG4,LANG5,LANG6,TRNS,TRNS,TRNS,TRNS, \
+         F23, F24,LANG1,LANG2,LANG3,TRNS,TRNS, TRNS, TRNS, TRNS,TRNS,TRNS,TRNS,TRNS, \
+         TRNS,TRNS,TRNS,          LANG7,              TRNS, TRNS,TRNS,TRNS,TRNS),
 };
 
 const uint16_t PROGMEM fn_actions[] = {
@@ -56,6 +63,7 @@ const uint16_t PROGMEM fn_actions[] = {
     [2] = ACTION_LAYER_TAP_KEY(1, KC_SPACE),
     [3] = ACTION_LAYER_TOGGLE(2),
     [4] = ACTION_LAYER_TOGGLE(3),
+    [5] = ACTION_LAYER_MOMENTARY(4),  // to Fn overlay
 };
 
 const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
@@ -90,10 +98,23 @@ void matrix_scan_user(void) {
 
    if (layer & (1<<3)) 
    {
-       gh60_wasd_leds_on();
+        gh60_wasd_leds_on();
    } 
    else 
    {
-       gh60_wasd_leds_off();
+        gh60_wasd_leds_off();
+   }
+
+   if (layer & (1<<4)) 
+   {
+        gh60_caps_led_on();
+        gh60_poker_leds_on();
+        gh60_fn_led_on();
+   } 
+   else
+   {
+        gh60_caps_led_off();
+        gh60_poker_leds_off();
+        gh60_fn_led_off();
    }
 };

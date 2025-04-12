@@ -16,6 +16,9 @@
 
 #pragma once
 
+/* PAX */
+ #define TAPPING_TERM 180
+
 /* Encoder Configuration */
 #define ENCODER_DEFAULT_POS 0x3
 #define ENCODER_MAP_KEY_DELAY 2

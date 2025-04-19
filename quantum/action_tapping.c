@@ -451,7 +451,8 @@ bool process_tapping(keyrecord_t *keyp) {
                     } else {
                         ac_dprintf("Tapping: Start while last tap(1).\n");
                     }
-                    tapping_key = *keyp;
+                    //tapping_key = *keyp;
+                    tapping_key = (keyrecord_t){};
                     waiting_buffer_scan_tap();
                     debug_tapping_key();
                     return true;
@@ -467,7 +468,8 @@ bool process_tapping(keyrecord_t *keyp) {
         }
         // after TAPPING_TERM
         else {
-            if (tapping_key.tap.count == 0) {
+            //if (tapping_key.tap.count == 0) {
+            if (true) {
                 ac_dprintf("Tapping: End. Timeout. Not tap(0): ");
                 debug_event(event);
                 ac_dprintf("\n");

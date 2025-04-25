@@ -17,7 +17,9 @@
 #pragma once
 
 /* PAX */
- #define TAPPING_TERM 180
+#define TAPPING_TERM 180
+#define QUICK_TAP_TERM 0
+//#define HOLD_ON_OTHER_KEY_PRESS
 
 /* Encoder Configuration */
 #define ENCODER_DEFAULT_POS 0x3

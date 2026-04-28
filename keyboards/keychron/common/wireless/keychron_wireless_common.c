@@ -33,6 +33,11 @@ bool firstDisconnect = true;
 static uint32_t pairing_key_timer;
 static uint8_t  host_idx = 0;
 
+/* Software transport override - allows key-based transport switching
+ * that bypasses the physical switch pin reading */
+static bool        soft_override_active = false;
+static transport_t soft_override_transport = TRANSPORT_NONE;
+
 bool process_record_keychron_wireless(uint16_t keycode, keyrecord_t *record) {
     static uint8_t host_idx;
 
@@ -119,9 +124,30 @@ void keychron_wireless_common_task(void) {
     }
 }
 
+void set_transport_soft_override(transport_t new_transport) {
+    soft_override_active = true;
+    soft_override_transport = new_transport;
+    set_transport(new_transport);
+}
+
+void clear_transport_soft_override(void) {
+    soft_override_active = false;
+    soft_override_transport = TRANSPORT_NONE;
+}
+
+bool is_transport_soft_override_active(void) {
+    return soft_override_active;
+}
+
 void wireless_pre_task(void) {
     static uint8_t  dip_switch_state = 0;
     static uint32_t time = 0;
+
+    /* When software override is active, skip pin polling
+     * so the key-based transport selection is not overridden */
+    if (soft_override_active) {
+        return;
+    }
 
     if (time == 0) {
         uint8_t pins_state = (gpio_read_pin(BT_MODE_SELECT_PIN) << 1)

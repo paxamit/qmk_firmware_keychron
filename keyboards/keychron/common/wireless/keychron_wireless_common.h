@@ -19,8 +19,12 @@
 #    include "via.h"
 #endif
 #include "quantum_keycodes.h"
+#include "transport.h"
 
 void lkbt51_param_init(void);
 
 bool process_record_keychron_wireless(uint16_t keycode, keyrecord_t *record);
 void keychron_wireless_common_task(void);
+void set_transport_soft_override(transport_t transport);
+void clear_transport_soft_override(void);
+bool is_transport_soft_override_active(void);

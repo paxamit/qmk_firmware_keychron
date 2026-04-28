@@ -41,7 +41,8 @@
 #    define LOW_BAT_IND_INDEX \
         { 74 }
 
+/* Required to avoid unused variable build error in rgb_matrix.c
+ * when RGB_MATRIX_TIMEOUT > 0 (Keychron indicator code depends on this) */
 #    define RGB_MATRIX_KEYPRESSES
-#    define RGB_MATRIX_FRAMEBUFFER_EFFECTS
 
 #endif

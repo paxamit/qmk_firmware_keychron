@@ -17,7 +17,20 @@
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
 
+#ifdef LK_WIRELESS_ENABLE
+#    include "transport.h"
+#    include "keychron_wireless_common.h"
+#endif
+
 #define CTL_ESC     CTL_T(KC_ESC)               // Tap for Esc, hold for Ctrl
+
+/* Transport-based RGB colors (hue, saturation — brightness is preserved) */
+#define TP_USB_HUE  20    /* Orange */
+#define TP_USB_SAT  255
+#define TP_24G_HUE  152   /* Blue */
+#define TP_24G_SAT  255
+#define TP_BT_HUE   190   /* Purple-ish for BT, just in case */
+#define TP_BT_SAT   255
 
 enum layers {
     MAC_BASE,
@@ -25,6 +38,32 @@ enum layers {
     WIN_BASE,
     WIN_FN,
 };
+
+/* Custom keycode for toggling transport: USB ↔ 2.4G */
+enum custom_keycodes_user {
+    KC_TP_TOG = NEW_SAFE_RANGE,
+};
+
+#ifdef LK_WIRELESS_ENABLE
+/* Set RGB color based on current transport mode */
+static void set_transport_color(transport_t tp) {
+    uint8_t val = rgb_matrix_get_val();
+    switch (tp) {
+        case TRANSPORT_USB:
+            rgb_matrix_sethsv_noeeprom(TP_USB_HUE, TP_USB_SAT, val);
+            break;
+        case TRANSPORT_P2P4:
+            rgb_matrix_sethsv_noeeprom(TP_24G_HUE, TP_24G_SAT, val);
+            break;
+        case TRANSPORT_BLUETOOTH:
+            rgb_matrix_sethsv_noeeprom(TP_BT_HUE, TP_BT_SAT, val);
+            break;
+        default:
+            break;
+    }
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+}
+#endif
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -46,7 +85,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [WIN_BASE] = LAYOUT_ansi_82(
         KC_ESC,   KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,    KC_F9,    KC_F10,   KC_F11,   KC_F12,   KC_DEL,             KC_MUTE,
-        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,   KC_BSPC,            KC_PGUP,
+        KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,  KC_EQL,   KC_BSPC,            KC_TP_TOG,
         KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,  KC_BSLS,            KC_PGDN,
         CTL_ESC,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,            KC_ENT,             KC_HOME,
         KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,            KC_RSFT,  KC_UP,
@@ -58,7 +97,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         RGB_TOG,  RGB_MOD,  RGB_VAI,  RGB_HUI,  RGB_SAI,  RGB_SPI,  _______,  KC_PGUP,  KC_HOME,  KC_PGDN,  KC_PSCR,  _______,  _______,  _______,            _______,
         _______,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  KC_LEFT,  KC_DOWN,  KC_UP,    KC_RIGHT, KC_INS,   KC_DELETE,          _______,            KC_END,
         _______,            _______,  _______,  _______,  _______,  BAT_LVL,  NK_TOGG,  _______,  KC_END,   _______,  _______,            _______,  _______,
-        _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,  _______,  _______)
+        _______,  _______,  _______,                                _______,                                _______,  _______,  _______,  _______,  _______,  _______),
 };
 
 // clang-format on
@@ -71,9 +110,38 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 };
 #endif // ENCODER_MAP_ENABLE
 
+void keyboard_post_init_user(void) {
+#ifdef LK_WIRELESS_ENABLE
+    /* Set initial color based on transport after boot
+     * Small delay to let transport settle */
+    wait_ms(500);
+    set_transport_color(get_transport());
+#endif
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_keychron_common(keycode, record)) {
         return false;
     }
+
+#ifdef LK_WIRELESS_ENABLE
+    switch (keycode) {
+        case KC_TP_TOG:
+            if (record->event.pressed) {
+                /* Toggle transport: USB ↔ 2.4G */
+                transport_t current = get_transport();
+                transport_t next;
+                if (current == TRANSPORT_P2P4) {
+                    next = TRANSPORT_USB;
+                } else {
+                    next = TRANSPORT_P2P4;
+                }
+                set_transport_soft_override(next);
+                set_transport_color(next);
+            }
+            return false;
+    }
+#endif
+
     return true;
 }

@@ -25,8 +25,6 @@
 #define CTL_ESC     CTL_T(KC_ESC)               // Tap for Esc, hold for Ctrl
 
 /* Transport-based RGB colors (hue, saturation — brightness is preserved) */
-#define TP_USB_HUE  20    /* Orange */
-#define TP_USB_SAT  255
 #define TP_24G_HUE  152   /* Blue */
 #define TP_24G_SAT  255
 #define TP_BT_HUE   190   /* Purple-ish for BT, just in case */
@@ -45,23 +43,34 @@ enum custom_keycodes_user {
 };
 
 #ifdef LK_WIRELESS_ENABLE
-/* Set RGB color based on current transport mode */
-static void set_transport_color(transport_t tp) {
-    uint8_t val = rgb_matrix_get_val();
-    switch (tp) {
-        case TRANSPORT_USB:
-            rgb_matrix_sethsv_noeeprom(TP_USB_HUE, TP_USB_SAT, val);
-            break;
-        case TRANSPORT_P2P4:
-            rgb_matrix_sethsv_noeeprom(TP_24G_HUE, TP_24G_SAT, val);
-            break;
-        case TRANSPORT_BLUETOOTH:
-            rgb_matrix_sethsv_noeeprom(TP_BT_HUE, TP_BT_SAT, val);
-            break;
-        default:
-            break;
+void matrix_scan_user(void) {
+    static transport_t last_tp = TRANSPORT_USB;
+    transport_t current_tp = get_transport();
+    
+    if (current_tp != last_tp) {
+        if (current_tp == TRANSPORT_USB) {
+            /* Restore user's preferred saved color for USB mode */
+            rgb_matrix_reload_from_eeprom();
+        }
+        last_tp = current_tp;
     }
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+
+    /* Enforce custom colors for wireless modes. 
+     * Keychron's indicator.c reloads EEPROM after blinking, which can wipe our custom color 
+     * and leave the backlight black. This ensures it stays the correct color. */
+    if (rgb_matrix_is_enabled()) {
+        if (current_tp == TRANSPORT_P2P4) {
+            if (rgb_matrix_get_hue() != TP_24G_HUE || rgb_matrix_get_sat() != TP_24G_SAT) {
+                rgb_matrix_sethsv_noeeprom(TP_24G_HUE, TP_24G_SAT, rgb_matrix_get_val());
+                rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+            }
+        } else if (current_tp == TRANSPORT_BLUETOOTH) {
+            if (rgb_matrix_get_hue() != TP_BT_HUE || rgb_matrix_get_sat() != TP_BT_SAT) {
+                rgb_matrix_sethsv_noeeprom(TP_BT_HUE, TP_BT_SAT, rgb_matrix_get_val());
+                rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+            }
+        }
+    }
 }
 #endif
 
@@ -111,12 +120,6 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 #endif // ENCODER_MAP_ENABLE
 
 void keyboard_post_init_user(void) {
-#ifdef LK_WIRELESS_ENABLE
-    /* Set initial color based on transport after boot
-     * Small delay to let transport settle */
-    wait_ms(500);
-    set_transport_color(get_transport());
-#endif
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -137,7 +140,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                     next = TRANSPORT_P2P4;
                 }
                 set_transport_soft_override(next);
-                set_transport_color(next);
             }
             return false;
     }
